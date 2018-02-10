@@ -14,8 +14,8 @@ namespace Neo.SmartContract
         public static string Symbol() => "CGE";
 
         // The owner address.
-        // TODO: Update this part when deploying to main net.
-        public static readonly byte[] Owner = { 185, 129, 156, 44, 117, 69, 46, 55, 142, 209, 188, 180, 56, 146, 2, 165, 108, 188, 129, 122 };
+        public static readonly byte[] Owner = "AKnA1QPaR1AEX7R1NBgBfJ5N97uZXSfbtP".ToScriptHash();
+        public static readonly byte[] Operator = "AY4PQo2v4BPLgdUTBgUbaXgJ7botdQg6P2".ToScriptHash();
         public static byte Decimals() => 8;
         private const ulong factor = 100000000; //decided by Decimals()
         private const ulong neo_decimals = 100000000;
@@ -23,14 +23,8 @@ namespace Neo.SmartContract
         //ICO Settings
         private static readonly byte[] NEO_ASSET_ID = { 155, 124, 255, 218, 166, 116, 190, 174, 15, 147, 14, 190, 96, 133, 175, 144, 147, 229, 254, 86, 179, 74, 92, 34, 12, 205, 207, 110, 252, 51, 111, 197 };
         private const ulong TOTAL_AMOUNT = 100000000 * factor;      // Maximum amount of tokens that can be available in the chain
-        private const ulong OWNER_AMOUNT = 35000000 * factor;       // The portion that owner will hold.
-
-        // ICO phases
-        // TODO: make configurable settings?
-        private const int PRE_SALE_BEGIN_AT = 1515229200;           // Saturday, January 6, 2018 9:00:00 AM
-        private const int PRE_SALE_END_AT = 1517648400;             // Saturday, February 3, 2018 9:00:00
-        private const int MAIN_SALE_BEGIN_AT = 1517907600;          // Tuesday, February 6, 2018 9:00:00 AM
-        private const int MAIN_SALE_END_AT = 1520326800;            // Tuesday, March 6, 2018 9:00:00 AM
+        private const ulong OWNER_AMOUNT = 39000000 * factor;       // The portion that owner will hold.
+        private static readonly byte[] WHITELIST_FLAG = { 49 };
 
         [DisplayName("transfer")]
         public static event Action<byte[], byte[], BigInteger> Transferred;
@@ -76,9 +70,97 @@ namespace Neo.SmartContract
                     return BalanceOf(account);
                 }
                 if (operation == "decimals") return Decimals();
+                if (operation == "addToWhitelist")
+                {
+                    if (args.Length != 1) return 0;
+                    byte[] account = (byte[])args[0];
+                    return AddToWhiteList(account);
+                }
+                if (operation == "removeFromWhitelist")
+                {
+                    if (args.Length != 1) return 0;
+                    byte[] account = (byte[])args[0];
+                    return RemoveFromWhiteList(account);
+                }
+                if (operation == "isInWhitelist")
+                {
+                    if (args.Length != 1) return 0;
+                    byte[] account = (byte[])args[0];
+                    return IsInWhiteList(account);
+                }
+                if (operation == "getParamValueInt")
+                {
+                    if (args.Length != 1) return 0;
+                    byte[] paramName = (byte[])args[0];
+                    return GetParamValueInt(paramName);
+                }
+                if (operation == "setWhitelistSaleBegin")
+                {
+                    return SetParamValueByString("WHITELIST_SALE_BEGIN", (BigInteger)args[0]);
+                }
+                if (operation == "setWhitelistSaleRate")
+                {
+                    return SetParamValueByString("WHITELIST_SALE_RATE_NEO", (BigInteger)args[0]);
+                }
+                if (operation == "setWhitelistHardcap")
+                {
+                    return SetParamValueByString("WHITELIST_HARD_CAP", (BigInteger)args[0]);
+                }
+                if (operation == "setPresaleBegin")
+                {
+                    return SetParamValueByString("PRE_SALE_BEGIN", (BigInteger)args[0]);
+                }
+                if (operation == "setPresaleWeek1Rate")
+                {
+                    return SetParamValueByString("PRE_SALE_WEEK1_RATE_NEO", (BigInteger)args[0]);
+                }
+                if (operation == "setPresaleWeek2Rate")
+                {
+                    return SetParamValueByString("PRE_SALE_WEEK2_RATE_NEO", (BigInteger)args[0]);
+                }
+                if (operation == "setPresaleWeek3Rate")
+                {
+                    return SetParamValueByString("PRE_SALE_WEEK3_RATE_NEO", (BigInteger)args[0]);
+                }
+                if (operation == "setPresaleWeek4Rate")
+                {
+                    return SetParamValueByString("PRE_SALE_WEEK4_RATE_NEO", (BigInteger)args[0]);
+                }
+                if (operation == "setPresaleHardcap")
+                {
+                    return SetParamValueByString("PRE_SALE_HARD_CAP", (BigInteger)args[0]);
+                }
+                if (operation == "setMainsaleBegin")
+                {
+                    return SetParamValueByString("MAIN_SALE_BEGIN", (BigInteger)args[0]);
+                }
+                if (operation == "setMainsaleWeek1Rate")
+                {
+                    return SetParamValueByString("MAIN_SALE_WEEK1_RATE_NEO", (BigInteger)args[0]);
+                }
+                if (operation == "setMainsaleWeek2Rate")
+                {
+                    return SetParamValueByString("MAIN_SALE_WEEK2_RATE_NEO", (BigInteger)args[0]);
+                }
+                if (operation == "setMainsaleWeek3Rate")
+                {
+                    return SetParamValueByString("MAIN_SALE_WEEK3_RATE_NEO", (BigInteger)args[0]);
+                }
+                if (operation == "setMainsaleWeek4Rate")
+                {
+                    return SetParamValueByString("MAIN_SALE_WEEK4_RATE_NEO", (BigInteger)args[0]);
+                }
+                if (operation == "setMainsaleHardcap")
+                {
+                    return SetParamValueByString("MAIN_SALE_HARD_CAP", (BigInteger)args[0]);
+                }
+                if (operation == "setMaxPurchase")
+                {
+                    return SetParamValueByString("MAX_NEO_PER_TRANSFER", (BigInteger)args[0]);
+                }
             }
 
-            // TODO: do we refund in case of wrong transfer?
+            // Refund in case of wrong transfer
             byte[] sender = GetSender();
             ulong contribute_value = GetContributeValue();
             if (contribute_value > 0 && sender.Length != 0)
@@ -96,6 +178,28 @@ namespace Neo.SmartContract
             if (total_supply.Length != 0) return false;
             Storage.Put(Storage.CurrentContext, Owner, OWNER_AMOUNT);
             Storage.Put(Storage.CurrentContext, "totalSupply", OWNER_AMOUNT);
+
+            // Whitelist sale begin: Tuesday, February 13, 2018 9:00:00 AM GMT
+            Storage.Put(Storage.CurrentContext, "WHITELIST_SALE_BEGIN", 1518512400);
+
+            // Whitelist sale hardcap
+            Storage.Put(Storage.CurrentContext, "WHITELIST_HARD_CAP", 45000000);
+
+            // Pre-sale begin: Wednesday, February 14, 2018 9:00:00 AM GMT
+            Storage.Put(Storage.CurrentContext, "PRE_SALE_BEGIN", 1518598800);
+
+            // Pre-sale hardcap
+            Storage.Put(Storage.CurrentContext, "PRE_SALE_HARD_CAP", 55000000);
+
+            // Main-sale begin: Saturday, March 31, 2018 9:00:00 AM GMT
+            Storage.Put(Storage.CurrentContext, "MAIN_SALE_BEGIN", 1522486800);
+
+            // Main-sale hardcap
+            Storage.Put(Storage.CurrentContext, "MAIN_SALE_HARD_CAP", 100000000);
+
+            Storage.Put(Storage.CurrentContext, "MAX_NEO_PER_TRANSFER", 250);
+
+            // First minted tokens are granted to owner
             Transferred(null, Owner, OWNER_AMOUNT);
             return true;
         }
@@ -116,28 +220,30 @@ namespace Neo.SmartContract
             // The contribution amount was sent.
             ulong contribute_value = GetContributeValue();
             // Get current exchange rate
-            ulong swap_rate = CurrentSwapRate();
+            ulong exchange_rate = GetCurrentExchangeRate();
 
             // Refund if now is not in sale phase, or all tokens were sold out.
-            if (swap_rate == 0)
+            if (exchange_rate == 0)
             {
                 Refund(sender, contribute_value);
                 return false;
             }
 
-            // You got tokens
-            ulong token = CurrentSwapToken(sender, contribute_value, swap_rate);
-            if (token == 0)
+            // Determine exchangeable tokens, based on current exchange rate, contributed value and number of tokens left
+            ulong exchangeable_tokens = GetExchangeableTokens(sender, contribute_value, exchange_rate);
+
+            // No more tokens can be minted
+            if (exchangeable_tokens == 0)
             {
                 return false;
             }
 
-            // Update balances
+            // Else update balance and total supply
             BigInteger balance = Storage.Get(Storage.CurrentContext, sender).AsBigInteger();
-            Storage.Put(Storage.CurrentContext, sender, token + balance);
+            Storage.Put(Storage.CurrentContext, sender, exchangeable_tokens + balance);
             BigInteger totalSupply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
-            Storage.Put(Storage.CurrentContext, "totalSupply", token + totalSupply);
-            Transferred(null, sender, token);
+            Storage.Put(Storage.CurrentContext, "totalSupply", exchangeable_tokens + totalSupply);
+            Transferred(null, sender, exchangeable_tokens);
             return true;
         }
 
@@ -148,7 +254,6 @@ namespace Neo.SmartContract
         }
 
         // Function is called when someone wants to transfer tokens.
-        // TODO: prevent tranferring before ICO is finished?
         public static bool Transfer(byte[] from, byte[] to, BigInteger value)
         {
             if (value <= 0) return false;
@@ -172,84 +277,191 @@ namespace Neo.SmartContract
             return Storage.Get(Storage.CurrentContext, address).AsBigInteger();
         }
 
-        // Get current exchange rate between tokens and NEO in sale phase
-        private static ulong CurrentSwapRate()
+        // Get the value of a parameter
+        public static BigInteger GetParamValueInt(byte[] paramName)
         {
-            int now = (int) (Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp + 15);
-            int WEEK_IN_SECONS = 604800;
+            return Storage.Get(Storage.CurrentContext, paramName).AsBigInteger();
+        }
 
-            // In pre-sale
-            if (now > PRE_SALE_BEGIN_AT && now < PRE_SALE_END_AT)
+        // Set the value of a parameter
+        public static Boolean SetParamValueInt(byte[] paramName, BigInteger paramValue)
+        {
+            // Only owner or operator can update the value of parameters
+            if (!Runtime.CheckWitness(Owner) && !Runtime.CheckWitness(Operator))
             {
-                // The first week
-                if (now < PRE_SALE_BEGIN_AT + WEEK_IN_SECONS)
+                return false;
+            }
+
+            Storage.Put(Storage.CurrentContext, paramName, paramValue);
+            return true;
+        }
+
+        public static Boolean SetParamValueByString(String paramName, BigInteger paramValue)
+        {
+            // Only owner or operator can update the value of parameters
+            if (!Runtime.CheckWitness(Owner) && !Runtime.CheckWitness(Operator))
+            {
+                return false;
+            }
+
+            Storage.Put(Storage.CurrentContext, paramName, paramValue);
+            return true;
+        }
+
+        public static Boolean AddToWhiteList(byte[] address)
+        {
+            byte[] paramName = address.Concat(WHITELIST_FLAG);
+            return SetParamValueInt(paramName, 1);
+        }
+
+        public static Boolean RemoveFromWhiteList(byte[] address)
+        {
+            byte[] paramName = address.Concat(WHITELIST_FLAG);
+            return SetParamValueInt(paramName, 0);
+        }
+
+        public static BigInteger IsInWhiteList(byte[] address)
+        {
+            byte[] paramName = address.Concat(WHITELIST_FLAG);
+            return GetParamValueInt(paramName);
+        }
+
+        // Get current exchange rate between tokens and NEO in sale phase
+        private static ulong GetCurrentExchangeRate()
+        {
+            ulong now = Runtime.Time;
+            ulong WEEK_IN_SECONS = 7 * 24 * 3600;
+            ulong WHITELIST_SALE_BEGIN = (ulong)Storage.Get(Storage.CurrentContext, "WHITELIST_SALE_BEGIN").AsBigInteger();
+            ulong PRE_SALE_BEGIN = (ulong)Storage.Get(Storage.CurrentContext, "PRE_SALE_BEGIN").AsBigInteger();
+            ulong MAIN_SALE_BEGIN = (ulong)Storage.Get(Storage.CurrentContext, "MAIN_SALE_BEGIN").AsBigInteger();
+            ulong rate = 0;
+
+            // In the whitelist sale
+            if (WHITELIST_SALE_BEGIN < now && now < PRE_SALE_BEGIN)
+            {
+                // Address that is not in the whitelist cannot get tokens
+                if (IsInWhiteList(GetSender()) != 1)
                 {
-                    return 311 * factor;
+                    return 0;
                 }
-                else if (now < PRE_SALE_BEGIN_AT + 2 * WEEK_IN_SECONS)
+
+                rate = (ulong)Storage.Get(Storage.CurrentContext, "WHITELIST_SALE_RATE_NEO").AsBigInteger();
+            }
+            // Pre-sale
+            else if (PRE_SALE_BEGIN <= now && now < PRE_SALE_BEGIN + 4 * WEEK_IN_SECONS)
+            {
+                if (now < PRE_SALE_BEGIN + WEEK_IN_SECONS)
                 {
-                    return 274 * factor;
+                    rate = (ulong)Storage.Get(Storage.CurrentContext, "PRE_SALE_WEEK1_RATE_NEO").AsBigInteger();
                 }
-                else if (now < PRE_SALE_BEGIN_AT + 3 * WEEK_IN_SECONS)
+                else if (now < PRE_SALE_BEGIN + 2 * WEEK_IN_SECONS)
                 {
-                    return 259 * factor;
+                    rate = (ulong)Storage.Get(Storage.CurrentContext, "PRE_SALE_WEEK2_RATE_NEO").AsBigInteger();
+                }
+                else if (now < PRE_SALE_BEGIN + 3 * WEEK_IN_SECONS)
+                {
+                    rate = (ulong)Storage.Get(Storage.CurrentContext, "PRE_SALE_WEEK3_RATE_NEO").AsBigInteger();
                 }
                 else
                 {
-                    return 233 * factor;
+                    rate = (ulong)Storage.Get(Storage.CurrentContext, "PRE_SALE_WEEK4_RATE_NEO").AsBigInteger();
                 }
             }
-            // In main-sale
-            else if (now > MAIN_SALE_BEGIN_AT && now < MAIN_SALE_END_AT)
+            // Main-sale
+            else if (MAIN_SALE_BEGIN <= now && now < MAIN_SALE_BEGIN + 4 * WEEK_IN_SECONS)
             {
-                if (now < MAIN_SALE_BEGIN_AT + WEEK_IN_SECONS)
+                if (now < MAIN_SALE_BEGIN + WEEK_IN_SECONS)
                 {
-                    return 187 * factor;
+                    rate = (ulong)Storage.Get(Storage.CurrentContext, "MAIN_SALE_WEEK1_RATE_NEO").AsBigInteger();
                 }
-                else if (now < MAIN_SALE_BEGIN_AT + 2 * WEEK_IN_SECONS)
+                else if (now < MAIN_SALE_BEGIN + 2 * WEEK_IN_SECONS)
                 {
-                    return 165 * factor;
+                    rate = (ulong)Storage.Get(Storage.CurrentContext, "MAIN_SALE_WEEK2_RATE_NEO").AsBigInteger();
                 }
-                else if (now < MAIN_SALE_BEGIN_AT + 3 * WEEK_IN_SECONS)
+                else if (now < MAIN_SALE_BEGIN + 3 * WEEK_IN_SECONS)
                 {
-                    return 155 * factor;
+                    rate = (ulong)Storage.Get(Storage.CurrentContext, "MAIN_SALE_WEEK3_RATE_NEO").AsBigInteger();
                 }
-                else if (now < MAIN_SALE_BEGIN_AT + 3 * WEEK_IN_SECONS)
+                else
                 {
-                    return 140 * factor;
+                    rate = (ulong)Storage.Get(Storage.CurrentContext, "MAIN_SALE_WEEK4_RATE_NEO").AsBigInteger();
                 }
             }
 
-            // Else nothing for you.
-            return 0;
+            return rate * factor;
+        }
+
+        private static BigInteger GetCurrentHardCap()
+        {
+            ulong now = Runtime.Time;
+            ulong WEEK_IN_SECONS = 7 * 24 * 3600;
+            ulong WHITELIST_SALE_BEGIN = (ulong)Storage.Get(Storage.CurrentContext, "WHITELIST_SALE_BEGIN").AsBigInteger();
+            ulong PRE_SALE_BEGIN = (ulong)Storage.Get(Storage.CurrentContext, "PRE_SALE_BEGIN").AsBigInteger();
+            ulong MAIN_SALE_BEGIN = (ulong)Storage.Get(Storage.CurrentContext, "MAIN_SALE_BEGIN").AsBigInteger();
+            BigInteger cap = TOTAL_AMOUNT;
+
+            // In the whitelist sale
+            if (WHITELIST_SALE_BEGIN < now && now < PRE_SALE_BEGIN)
+            {
+                cap = Storage.Get(Storage.CurrentContext, "WHITELIST_HARD_CAP").AsBigInteger() * factor;
+            }
+            // In pre-sale
+            else if (PRE_SALE_BEGIN < now && now < PRE_SALE_BEGIN + 4 * WEEK_IN_SECONS)
+            {
+                cap = Storage.Get(Storage.CurrentContext, "PRE_SALE_HARD_CAP").AsBigInteger() * factor;
+            }
+            // In main-sale
+            else if (MAIN_SALE_BEGIN < now && now < MAIN_SALE_BEGIN + 4 * WEEK_IN_SECONS)
+            {
+                cap = Storage.Get(Storage.CurrentContext, "MAIN_SALE_HARD_CAP").AsBigInteger() * factor;
+            }
+
+            if (cap < TOTAL_AMOUNT)
+            {
+                return cap;
+            }
+
+            return TOTAL_AMOUNT;
         }
 
         // Get total valid exchange tokens
-        private static ulong CurrentSwapToken(byte[] sender, ulong value, ulong swap_rate)
+        private static ulong GetExchangeableTokens(byte[] sender, ulong value, ulong exchange_rate)
         {
             // Amount that user wants to buy
-            ulong token = value / neo_decimals * swap_rate;
+            ulong desired_tokens = value / neo_decimals * exchange_rate;
 
             // Current total supply tokens.
             BigInteger total_supply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
 
-            // The available tokens left.
-            BigInteger balance_token = TOTAL_AMOUNT - total_supply;
+            // Hard cap for current sale phase
+            BigInteger hard_cap = GetCurrentHardCap();
 
-            // If there's no available token left, just refund
+            // The available tokens left.
+            BigInteger balance_token = hard_cap - total_supply;
+
+            // If no token left, just refund
             if (balance_token <= 0)
             {
                 Refund(sender, value);
                 return 0;
             }
-            // If available tokens is not enough, just exchange available ones, and refund the rest to user
-            else if (balance_token < token)
+
+            // Maximum tokens can be purchased per transfer
+            ulong max_tokens_per_transfer = (ulong)Storage.Get(Storage.CurrentContext, "MAX_NEO_PER_TRANSFER").AsBigInteger() * exchange_rate;
+            if (max_tokens_per_transfer > 0 && balance_token > max_tokens_per_transfer)
             {
-                Refund(sender, (token - balance_token) / swap_rate * neo_decimals);
-                token = (ulong)balance_token;
+                balance_token = max_tokens_per_transfer;
             }
 
-            return token;
+            // If remaining tokens is not enough, try to buy as much as possible
+            if (balance_token < desired_tokens)
+            {
+                BigInteger exchangeable_tokens = balance_token - (balance_token % exchange_rate);
+                Refund(sender, (desired_tokens - exchangeable_tokens) / exchange_rate * neo_decimals);
+                return (ulong)exchangeable_tokens;
+            }
+
+            return desired_tokens;
         }
 
         // Check whether asset is neo and get sender script hash
